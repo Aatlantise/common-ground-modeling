@@ -1,0 +1,6 @@
+depedit
+tqdm
+pandas
+seaborn
+matplotlib
+scikit-learn

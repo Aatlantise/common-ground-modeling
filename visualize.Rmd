@@ -1,0 +1,140 @@
+---
+title: "anaphoric_pair"
+output: html_document
+---
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+library(ggplot2)
+library(dplyr)
+df = read.table("anaphoric_pair_distribution.tsv", header = TRUE, sep = '\t', quote="\"")
+```
+
+## Including Plots
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r pressure, echo=FALSE}
+means <- df %>%
+  group_by(pronominality) %>%
+  summarise(mean_clause_d = mean(clause_d, na.rm = TRUE))
+
+line_colors <- c("pronominal" = "lightblue", "non-pronominal" = "pink")
+
+df$pronominality <- factor(df$pronominality, levels = c("pronominal", "non-pronominal"))
+
+ggplot(df, aes(x = clause_d, fill = factor(pronominality))) +
+  geom_histogram(aes(y = ..density..), binwidth = 2, position = "identity", color = "black", alpha = 0.7) +
+  labs(title = "Pronominal & Non-pronominal Anaphoric Pairs", 
+       x = "# Clauses between anaphoric pair", y = "Relative Frequency", fill = "Pronominality") +
+  scale_fill_manual(values = c("lightblue", "pink")) +
+  scale_x_continuous(limits = c(0, 50)) +  # Set x-axis range from 0 to 50 +
+  facet_wrap(~ pronominality, nrow=2) +
+  geom_vline(data = means, aes(xintercept = mean_clause_d, color = pronominality),
+             linetype = "dashed", size = 1) +
+  theme_minimal() +  # Add dashed vertical lines at the means
+  scale_color_manual(values = line_colors)
+```
+
+```{r pressure, echo=FALSE}
+means <- df %>%
+  group_by(pronominality) %>%
+  summarise(mean_clause_d = mean(clause_d, na.rm = TRUE))
+
+line_colors <- c("pronominal" = "lightblue", "non-pronominal" = "pink")
+
+df$pronominality <- factor(df$pronominality, levels = c("pronominal", "non-pronominal"))
+
+ggplot(df, aes(x = word_d, fill = factor(pronominality))) +
+  geom_histogram(aes(y = ..density..), binwidth = 2, position = "identity", color = "black", alpha = 0.7) +
+  labs(title = "Pronominal & Non-pronominal Anaphoric Pairs", 
+       x = "# Tokens between anaphoric pair", y = "Relative Frequency", fill = "Pronominality") +
+  scale_fill_manual(values = c("lightblue", "pink")) +
+  scale_x_continuous(limits = c(0, 50)) +  # Set x-axis range from 0 to 50 +
+  facet_wrap(~ pronominality, nrow=2) +
+  geom_vline(data = means, aes(xintercept = mean_clause_d, color = pronominality),
+             linetype = "dashed", size = 1) +
+  theme_minimal() +  # Add dashed vertical lines at the means
+  scale_color_manual(values = line_colors)
+```
+
+```{r}
+df_long <- df %>%
+  pivot_longer(cols = c(nomp, accp, oblp, genp, othp), 
+               names_to = "variable", 
+               values_to = "value")
+
+# Recalculate the means for each combination of pronominality and variable
+means <- df_long %>%
+  group_by(pronominality, variable) %>%
+  summarise(mean_value = mean(value, na.rm = TRUE))
+
+# Assign custom line colors
+line_colors <- c("pronominal" = "lightblue", "non-pronominal" = "pink")
+
+# Reorder the factor levels for 'pronominality' and 'variable'
+df_long$pronominality <- factor(df_long$pronominality, levels = c("pronominal", "non-pronominal"))
+df_long$variable <- factor(df_long$variable, levels = c("nomp", "accp", "oblp", "genp", "othp"))
+
+# Create the plot
+ggplot(df_long, aes(x = value, fill = factor(pronominality))) +
+  geom_histogram(aes(y = ..density..), binwidth = 2, position = "identity", color = "black", alpha = 0.7) +
+  labs(title = "Pronominal & Non-pronominal Anaphoric Pairs", 
+       x = "# Tokens between anaphoric pair", y = "Relative Frequency", fill = "Pronominality") +
+  scale_fill_manual(values = c("lightblue", "pink")) +
+  scale_x_continuous(limits = c(0, 50)) +  # Set x-axis range from 0 to 50
+  facet_wrap(pronominality ~ variable, nrow = 2) +  # Facet by both 'pronominality' and 'variable'
+  geom_vline(data = means, aes(xintercept = mean_value, color = pronominality),
+             linetype = "dashed", size = 1) +
+  theme_minimal() +
+  scale_color_manual(values = line_colors)
+
+```
+
+
+
+```{r pressure, echo=FALSE}
+means <- df %>%
+  group_by(humanness) %>%
+  summarise(mean_clause_d = mean(clause_d, na.rm = TRUE))
+
+line_colors <- c("human" = "blue", "non-human" = "green")
+
+ggplot(df, aes(x = clause_d, fill = factor(humanness))) +
+  geom_histogram(aes(y = ..density..), binwidth = 2, position = "identity", color = "black", alpha = 0.7) +
+  labs(title = "Human & Non-human Anaphoric Pairs", 
+       x = "# Clauses between anaphoric pair", y = "Relative Frequency", fill = "Pronominality") +
+  scale_fill_manual(values = c("lightblue", "lightgreen")) +
+  scale_x_continuous(limits = c(0, 50)) +  # Set x-axis range from 0 to 50 +
+  facet_wrap(~ humanness, nrow=2) +
+  geom_vline(data = means, aes(xintercept = mean_clause_d, color = humanness),
+             linetype = "dashed", size = 1) +
+  theme_minimal() +  # Add dashed vertical lines at the means
+  scale_color_manual(values = line_colors)
+```
+```{r}
+means <- df %>%
+  group_by(case) %>%
+  summarise(mean_clause_d = mean(clause_d, na.rm = TRUE))
+
+# Reorder the 'case' factor levels to ensure the desired order in the plot
+df$case <- factor(df$case, levels = c("nom", "acc", "gen", "obl", "other"))
+
+# Create the histogram with 'case' as the faceting variable
+ggplot(df, aes(x = clause_d, fill = factor(case))) +
+  geom_histogram(aes(y = ..density..), binwidth = 5, position = "identity", color = "black", alpha = 0.7) +
+  labs(title = "Distribution of Clause Distance by Case", 
+       x = "Clause Distance", y = "Relative Frequency", fill = "Case") +
+  scale_fill_manual(values = c("lightblue", "lightgreen", "lightcoral", "lightyellow", "lightpink")) +  # Choose your colors
+  scale_x_continuous(limits = c(0, 50)) +  # Set x-axis range from 0 to 50
+  theme_minimal() +
+  facet_wrap(~ case, scales = "free_y", nrow = 2) +  # Facet by 'case' and arrange up-and-down
+  geom_vline(data = means, aes(xintercept = mean_clause_d, color = case),
+             linetype = "dashed", size = 1, legend=FALSE) +  # Add dashed vertical lines at the means for each 'case'
+  scale_color_manual(values = c("nom" = "blue", "acc" = "green", "gen" = "coral", "obl" = "yellow", "other" = "pink"))  # Color vertical lines
+```
+
