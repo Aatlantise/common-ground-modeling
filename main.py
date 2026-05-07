@@ -2,6 +2,8 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import stanza
 import pandas as pd
+import os
+import glob
 
 class DiscourseSimulator:
     def __init__(self, model_name="meta-llama/Llama-3.2-1B"):
@@ -55,100 +57,6 @@ class DiscourseSimulator:
 
         return continuations
 
-    # def analyze_salience(self, context, continuations, target_entity_text):
-    #     """
-    #     Uses Stanza to track entity clusters across context and generated continuations.
-    #     """
-    #     mentions_count = 0
-    #     context_char_len = len(context)
-    #     all_competitor_data = []
-    #
-    #     for continuation in continuations:
-    #         if not continuation: continue
-    #         full_text = context + [(sent + "").split(" ") for sent in continuation.split(". ")]
-    #         doc = self.nlp(full_text)
-    #
-    #         # Stanza coref clusters are accessed via doc.clusters
-    #         target_cluster_id = None
-    #
-    #         # 1. Identify the cluster ID for our target entity in the context
-    #         # We look for a mention that matches our text AND starts within the context
-    #         target_chain = None
-    #         context_char_len = len(context)
-    #
-    #         for chain in doc.coref:
-    #             # Stanza chains contain a list called 'mentions'
-    #             for mention in chain.mentions:
-    #
-    #                 # 1. Get the correct sentence
-    #                 # Depending on the exact sub-version of Stanza, the attribute is 'sent_index' or 'sentence'
-    #                 sent_idx = getattr(mention, 'sent_index', getattr(mention, 'sentence', 0))
-    #                 sentence = doc.sentences[sent_idx]
-    #
-    #                 # 2. Extract the actual word objects using the mention's indices
-    #                 # Stanza's coref start/end indices align with the sentence.words list
-    #                 mention_words = sentence.words[mention.start_word: mention.end_word]
-    #
-    #                 if not mention_words:
-    #                     continue
-    #
-    #                 # 3. Reconstruct text and get character offsets from the Word objects
-    #                 mention_text = " ".join([w.text for w in mention_words])
-    #                 start_char = mention_words[0].start_char
-    #
-    #                 # 4. Apply your matching logic!
-    #                 if target_entity_text.lower() in mention_text.lower() and start_char < context_char_len:
-    #                     target_chain = chain
-    #                     break  # Found our target mention!
-    #
-    #             if target_chain:
-    #                 break  # Break the outer loop since we found the target chain
-    #
-    #         # 'survived' should be reset to False at the start of every continuation loop
-    #         survived = False
-    #         current_continuation_competitors = 0
-    #
-    #         for chain in doc.coref:
-    #             # Check if this chain is the one we identified as the target
-    #             is_target = (chain == target_chain)
-    #
-    #             for mention in chain.mentions:
-    #                 # 1. Resolve the sentence and word objects
-    #                 sent_idx = getattr(mention, 'sent_index', getattr(mention, 'sentence', 0))
-    #                 sentence = doc.sentences[sent_idx]
-    #
-    #                 # Stanza's coref indices are 0-based pointers into sentence.words
-    #                 mention_words = sentence.words[mention.start_word: mention.end_word]
-    #                 if not mention_words:
-    #                     continue
-    #
-    #                 # 2. Only look at mentions that start in the generated portion
-    #                 # We check the start_char of the first word in the mention
-    #                 if mention_words[0].start_char >= context_char_len:
-    #                     if is_target:
-    #                         # If the target is mentioned at least once in this continuation
-    #                         if not survived:
-    #                             mentions_count += 1
-    #                             survived = True
-    #                     else:
-    #                         # 3. This is a competitor. Extract features using the head_index
-    #                         # mention.head_index is the 0-based index of the head word in the sentence
-    #                         head_word = sentence.words[mention.start_word]
-    #
-    #                         all_competitor_data.append({
-    #                             "text": " ".join([w.text for w in mention_words]),
-    #                             "role": head_word.deprel,  # Universal Dependency (e.g., nsubj, obj)
-    #                             "pos": head_word.upos,  # Universal POS (e.g., PRON, NOUN)
-    #                             "is_pronoun": head_word.upos == 'PRON'
-    #                         })
-    #                         current_continuation_competitors += 1
-    #
-    #     salience_prob = mentions_count / len(continuations)
-    #     return {
-    #         "salience_probability": salience_prob,
-    #         "competitor_mentions": all_competitor_data,
-    #         "avg_competitor_pressure": len(all_competitor_data) / len(continuations)
-    #     }
 
     def analyze_salience(self, context, continuations, target_entity_text):
         """
@@ -351,10 +259,7 @@ def run_document_pilot(tsv_filepath, target_entity_text, window_size=3):
     return df
 
 
-# ==========================================
-# Run the Pilot
-# ==========================================
-if __name__ == "__main__":
+def single_file_pilot():
     # Replace with your actual GUM file path
     file_path = "GUM_news_korea.tsv"
 
@@ -367,3 +272,167 @@ if __name__ == "__main__":
     results_df.to_csv("salience_matrix_pilot.csv", index=False)
     print("\nSimulation complete. Data saved to salience_matrix_pilot.csv")
     print(results_df.head(10))
+
+
+def get_span_head(mention, sentence):
+    """
+    Finds the syntactic head of a word span.
+    The head is the word whose dependency parent is outside the span.
+    """
+    start_word_idx = mention.start_word
+    end_word_idx = mention.end_word
+
+    span_words = sentence.all_words[start_word_idx:end_word_idx]
+
+    # Stanza's word.head is a 1-based index, so we convert our 0-based span bounds
+    span_start_1based = start_word_idx + 1
+    span_end_1based = end_word_idx
+
+    for word in span_words:
+        # If the word's parent index is outside our span, this word is the root of the phrase!
+        if word.head < span_start_1based or word.head > span_end_1based:
+            return word
+
+    # Fallback for edge-case parse errors: return the right-most word (usually the noun in English)
+    return span_words[-1] if span_words else None
+
+
+def analyze_window_entities(sim, context, continuations):
+    """
+    Auto-discovers entities in the final sentence of the context and
+    calculates their survival rate in the continuations.
+    """
+    # 1. Parse the context to find the "launchpad" entities
+    context_flat = " ".join([" ".join(sent) for sent in context])
+    # Reconstruct list-of-lists for Stanza
+    full_text = context + [sent.split(" ") for cont in continuations if cont for sent in cont.split(". ")]
+    doc = sim.nlp(full_text)
+
+    launchpad_sent_idx = len(context) - 1  # The last sentence of the context
+    context_char_len = len(context_flat)
+
+    active_entities = []
+
+    # 2. Extract Independent Variables (Features from the context)
+    for chain in doc.coref:
+        last_mention_in_context = None
+
+        # Look for the latest mention of this entity in the launchpad sentence
+        for mention in chain.mentions:
+            sent_idx = getattr(mention, 'sent_index', getattr(mention, 'sentence', 0))
+            if sent_idx == launchpad_sent_idx:
+                last_mention_in_context = mention
+
+        if last_mention_in_context:
+            sentence = doc.sentences[launchpad_sent_idx]
+            mention_words = sentence.words[last_mention_in_context.start_word: last_mention_in_context.end_word]
+
+            if not mention_words:
+                continue
+
+            head_word = get_span_head(last_mention_in_context, sentence)
+
+            active_entities.append({
+                "target_chain": chain,
+                "text": " ".join([w.text for w in mention_words]),
+                "role": head_word.deprel,  # Syntactic role (nsubj, obj, obl)
+                "pos": head_word.upos,  # Part of speech (PRON, PROPN, NOUN)
+                "is_pronoun": head_word.upos == 'PRON',
+                "mentions_count": 0  # Initialize survival counter
+            })
+
+    # 3. Extract Dependent Variable (Survival in Continuations)
+    valid_continuations = [c for c in continuations if c]
+
+    for entity in active_entities:
+        survived_continuations = 0
+        target_chain = entity["target_chain"]
+
+        for mention in target_chain.mentions:
+            sent_idx = getattr(mention, 'sent_index', getattr(mention, 'sentence', 0))
+            sentence = doc.sentences[sent_idx]
+            mention_words = sentence.words[mention.start_word: mention.end_word]
+
+            if not mention_words:
+                continue
+
+            # If the mention occurs in the LLM-generated portion
+            if mention_words[0].start_char >= context_char_len:
+                # We just need to know if it survived at least once in this continuation
+                survived_continuations += 1
+                # Note: Stanza groups all generated text into doc.sentences.
+                # A more precise script would slice doc by continuation, but
+                # grouping them allows Stanza's coref to resolve across all silver text simultaneously.
+
+        # Calculate silver salience
+        entity["silver_salience"] = survived_continuations / len(valid_continuations) if valid_continuations else 0.0
+
+    return active_entities
+
+
+def batch_process_dev_set(dev_directory, window_size=3):
+    """
+    Loops through all GUM TSV files in a directory and builds the Salience Matrix.
+    """
+    sim = DiscourseSimulator()
+    salience_matrix = []
+
+    # Find all TSV files in the dev folder
+    tsv_files = glob.glob(os.path.join(dev_directory, "*.tsv"))
+    print(f"Found {len(tsv_files)} files in {dev_directory}")
+
+    for filepath in tsv_files:
+        doc_id = os.path.basename(filepath).replace(".tsv", "")
+        print(f"\nProcessing Document: {doc_id}")
+
+        doc_sentences = load_gum_tsv(filepath)
+
+        if len(doc_sentences) <= window_size:
+            print(f"  Skipping {doc_id}: Not enough sentences.")
+            continue
+
+        for i in range(window_size, len(doc_sentences)):
+            context_window = doc_sentences[i - window_size: i]
+            context_flat = ' '.join([' '.join(sent) for sent in context_window])
+
+            # Generate Silver Data
+            conts = sim.generate_continuations(context_flat, num_samples=10)
+
+            # Auto-extract features and salience
+            active_entities = analyze_window_entities(sim, context_window, conts)
+
+            # Append to our master dataset
+            for entity in active_entities:
+                salience_matrix.append({
+                    "doc_id": doc_id,
+                    "context_start_idx": i - window_size,
+                    "launchpad_sent_idx": i - 1,
+                    "entity_text": entity["text"],
+                    "dep_role": entity["role"],
+                    "pos_tag": entity["pos"],
+                    "is_pronoun": entity["is_pronoun"],
+                    "silver_salience": entity["silver_salience"]
+                })
+                print(
+                    f"  [{i}] Tracked '{entity['text']}' ({entity['role']}) -> Salience: {entity['silver_salience']:.2f}")
+
+    # Save the final dataset
+    df = pd.DataFrame(salience_matrix)
+    output_file = "gum_dev_salience_probing.csv"
+    df.to_csv(output_file, index=False)
+    print(f"\nBatch processing complete. Dataset saved to {output_file}")
+
+    return df
+
+
+# ==========================================
+# Run the Batch Process
+# ==========================================
+if __name__ == "__main__":
+    # Point this to your folder containing the GUM dev TSV files
+    dev_folder_path = "data/"
+
+    results_df = batch_process_dev_set(dev_folder_path, window_size=3)
+
+    print("\nDataset Summary:")
+    print(results_df['dep_role'].value_counts())
