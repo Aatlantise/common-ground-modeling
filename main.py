@@ -73,7 +73,22 @@ class DiscourseSimulator:
                 continue
 
             # Optimized list comprehension: removed redundant (sent + "") string concat
-            full_text = context + [sent.split(" ") for sent in continuation.split(". ")]
+                # Reconstruct list-of-lists for Stanza safely
+                silver_sentences = []
+                for cont in continuations:
+                    if not cont:
+                        continue
+                    # Split into rough sentences
+                    for sent_text in cont.split(". "):
+                        # .split() with no arguments automatically splits on ANY whitespace
+                        # (spaces, tabs, newlines) AND removes empty strings!
+                        tokens = [word for word in sent_text.split() if word.strip()]
+
+                        # Only append if the sentence actually contains valid words
+                        if tokens:
+                            silver_sentences.append(tokens)
+
+                full_text = context + silver_sentences
             doc = self.nlp(full_text)
 
             target_cluster_id = None
@@ -382,39 +397,42 @@ def batch_process_dev_set(dev_directory, window_size=3):
     print(f"Found {len(tsv_files)} files in {dev_directory}")
 
     for filepath in tsv_files:
-        doc_id = os.path.basename(filepath).replace(".tsv", "")
-        print(f"\nProcessing Document: {doc_id}")
+        try:
+            doc_id = os.path.basename(filepath).replace(".tsv", "")
+            print(f"\nProcessing Document: {doc_id}")
 
-        doc_sentences = load_gum_tsv(filepath)
+            doc_sentences = load_gum_tsv(filepath)
 
-        if len(doc_sentences) <= window_size:
-            print(f"  Skipping {doc_id}: Not enough sentences.")
-            continue
+            if len(doc_sentences) <= window_size:
+                print(f"  Skipping {doc_id}: Not enough sentences.")
+                continue
 
-        for i in range(window_size, len(doc_sentences)):
-            context_window = doc_sentences[i - window_size: i]
-            context_flat = ' '.join([' '.join(sent) for sent in context_window])
+            for i in range(window_size, len(doc_sentences)):
+                context_window = doc_sentences[i - window_size: i]
+                context_flat = ' '.join([' '.join(sent) for sent in context_window])
 
-            # Generate Silver Data
-            conts = sim.generate_continuations(context_flat, num_samples=10)
+                # Generate Silver Data
+                conts = sim.generate_continuations(context_flat, num_samples=10)
 
-            # Auto-extract features and salience
-            active_entities = analyze_window_entities(sim, context_window, conts)
+                # Auto-extract features and salience
+                active_entities = analyze_window_entities(sim, context_window, conts)
 
-            # Append to our master dataset
-            for entity in active_entities:
-                salience_matrix.append({
-                    "doc_id": doc_id,
-                    "context_start_idx": i - window_size,
-                    "launchpad_sent_idx": i - 1,
-                    "entity_text": entity["text"],
-                    "dep_role": entity["role"],
-                    "pos_tag": entity["pos"],
-                    "is_pronoun": entity["is_pronoun"],
-                    "silver_salience": entity["silver_salience"]
-                })
-                print(
-                    f"  [{i}] Tracked '{entity['text']}' ({entity['role']}) -> Salience: {entity['silver_salience']:.2f}")
+                # Append to our master dataset
+                for entity in active_entities:
+                    salience_matrix.append({
+                        "doc_id": doc_id,
+                        "context_start_idx": i - window_size,
+                        "launchpad_sent_idx": i - 1,
+                        "entity_text": entity["text"],
+                        "dep_role": entity["role"],
+                        "pos_tag": entity["pos"],
+                        "is_pronoun": entity["is_pronoun"],
+                        "silver_salience": entity["silver_salience"]
+                    })
+                    print(
+                        f"  [{i}] Tracked '{entity['text']}' ({entity['role']}) -> Salience: {entity['silver_salience']:.2f}")
+        except Exception as e:
+            print(f"  Error processing: {e}")
 
     # Save the final dataset
     df = pd.DataFrame(salience_matrix)
@@ -430,7 +448,7 @@ def batch_process_dev_set(dev_directory, window_size=3):
 # ==========================================
 if __name__ == "__main__":
     # Point this to your folder containing the GUM dev TSV files
-    dev_folder_path = "data/"
+    dev_folder_path = "data/tsv/"
 
     results_df = batch_process_dev_set(dev_folder_path, window_size=3)
 
