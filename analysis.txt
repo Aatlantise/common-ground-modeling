@@ -1,0 +1,69 @@
+--- Loading and Prepping Data ---
+Loaded 34160 total entities. Filtering to 23473 core syntactic roles.
+
+=== Hypothesis 1: Syntactic Hierarchy (ANOVA) ===
+ANOVA F-statistic: 634.6565, p-value: 0.0000e+00
+Significant difference found! Running Tukey HSD post-hoc test...
+Multiple Comparison of Means - Tukey HSD, FWER=0.05
+====================================================
+group1 group2 meandiff p-adj   lower   upper  reject
+----------------------------------------------------
+  amod   nmod  -0.0143  0.999 -0.1215   0.093  False
+  amod  nsubj   0.2929    0.0  0.1859  0.3999   True
+  amod    obj    0.001    1.0 -0.1062  0.1082  False
+  amod    obl  -0.0376 0.9181 -0.1446  0.0695  False
+  amod   root   0.0956 0.1297 -0.0142  0.2054  False
+  nmod  nsubj   0.3072    0.0   0.287  0.3274   True
+  nmod    obj   0.0153 0.3186 -0.0061  0.0367  False
+  nmod    obl  -0.0233 0.0165 -0.0439 -0.0026   True
+  nmod   root   0.1099    0.0   0.078  0.1418   True
+ nsubj    obj  -0.2919    0.0  -0.312 -0.2718   True
+ nsubj    obl  -0.3305    0.0 -0.3498 -0.3112   True
+ nsubj   root  -0.1973    0.0 -0.2284 -0.1663   True
+   obj    obl  -0.0386    0.0 -0.0591 -0.0181   True
+   obj   root   0.0946    0.0  0.0627  0.1264   True
+   obl   root   0.1332    0.0  0.1018  0.1645   True
+----------------------------------------------------
+
+=== Hypothesis 2: Lexical vs. Named Entities (T-Test) ===
+Mean Salience - Proper Nouns: 0.2678 (n=3045)
+Mean Salience - Common Nouns: 0.1144 (n=14958)
+T-statistic: 20.4812, p-value: 3.8688e-88
+
+=== Hypothesis 3: Phonological Weight (Correlation) ===
+Spearman Correlation: -0.2965, p-value: 0.0000e+00
+
+=== Mixed-Effects Regression ===
+/home/jm3743/.virtualenv/commonground/lib/python3.11/site-packages/statsmodels/regression/mixed_linear_model.py:2237: ConvergenceWarning: The MLE may be on the boundary of the parameter space.
+  warnings.warn(msg, ConvergenceWarning)
+             Mixed Linear Model Regression Results
+===============================================================
+Model:              MixedLM Dependent Variable: silver_salience
+No. Observations:   23473   Method:             REML
+No. Groups:         171     Scale:              0.1190
+Min. group size:    1       Log-Likelihood:     -8476.1969
+Max. group size:    266     Converged:          Yes
+Mean group size:    137.3
+---------------------------------------------------------------
+                     Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+---------------------------------------------------------------
+Intercept             0.162    0.035  4.625 0.000  0.093  0.230
+C(pos_tag)[T.ADV]     0.083    0.058  1.429 0.153 -0.031  0.197
+C(pos_tag)[T.AUX]    -0.103    0.347 -0.297 0.767 -0.783  0.577
+C(pos_tag)[T.DET]    -0.029    0.045 -0.655 0.513 -0.118  0.059
+C(pos_tag)[T.INTJ]    0.081    0.202  0.400 0.689 -0.315  0.477
+C(pos_tag)[T.NOUN]    0.032    0.029  1.109 0.267 -0.025  0.089
+C(pos_tag)[T.NUM]    -0.015    0.033 -0.449 0.653 -0.079  0.050
+C(pos_tag)[T.PRON]    0.402    0.030 13.597 0.000  0.344  0.460
+C(pos_tag)[T.PROPN]   0.167    0.029  5.682 0.000  0.110  0.225
+C(pos_tag)[T.SYM]    -0.065    0.063 -1.035 0.301 -0.188  0.058
+C(pos_tag)[T.VERB]   -0.043    0.037 -1.183 0.237 -0.115  0.029
+C(pos_tag)[T.X]      -0.167    0.246 -0.680 0.497 -0.650  0.315
+C(dep_role)[T.nmod]  -0.089    0.044 -2.040 0.041 -0.175 -0.004
+C(dep_role)[T.nsubj]  0.051    0.044  1.160 0.246 -0.035  0.137
+C(dep_role)[T.obj]   -0.090    0.044 -2.051 0.040 -0.176 -0.004
+C(dep_role)[T.obl]   -0.109    0.044 -2.498 0.012 -0.195 -0.024
+C(dep_role)[T.root]   0.047    0.044  1.065 0.287 -0.040  0.133
+entity_length        -0.002    0.001 -4.109 0.000 -0.003 -0.001
+Group Var             0.002    0.001
+===============================================================

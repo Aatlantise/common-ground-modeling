@@ -8,4 +8,6 @@ transformers
 torch==2.7
 stanza==1.11.0
 accelerate>=1.1.0
-conllu
+statsmodels
+scipy
+
