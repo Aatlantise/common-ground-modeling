@@ -27,8 +27,11 @@ group1 group2 meandiff p-adj   lower   upper  reject
 
 === Hypothesis 2: Lexical vs. Named Entities (T-Test) ===
 Mean Salience - Proper Nouns: 0.2678 (n=3045)
+Mean Salience - Pronouns: 0.5835 (n=4326)
 Mean Salience - Common Nouns: 0.1144 (n=14958)
-T-statistic: 20.4812, p-value: 3.8688e-88
+T-statistic comparing PROPN and NOUN: 20.4812, p-value: 3.8688e-88
+T-statistic comparing PRON and NOUN: 50.1961, p-value: 0.0000e+00
+T-statistic comparing PROPN and PRON: -27.0939, p-value: 3.6119e-154
 
 === Hypothesis 3: Phonological Weight (Correlation) ===
 Spearman Correlation: -0.2965, p-value: 0.0000e+00

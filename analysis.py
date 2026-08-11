@@ -47,14 +47,21 @@ def test_pos_differences(df):
 
     propn = df[df['pos_tag'] == 'PROPN']['silver_salience']
     noun = df[df['pos_tag'] == 'NOUN']['silver_salience']
+    pron = df[df['pos_tag'] == 'PRON']['silver_salience']
 
     print(f"Mean Salience - Proper Nouns: {propn.mean():.4f} (n={len(propn)})")
+    print(f"Mean Salience - Pronouns: {pron.mean():.4f} (n={len(pron)})")
     print(f"Mean Salience - Common Nouns: {noun.mean():.4f} (n={len(noun)})")
 
     # Independent T-Test
     t_stat, p_val = stats.ttest_ind(propn, noun, equal_var=False)  # Welch's t-test
-    print(f"T-statistic: {t_stat:.4f}, p-value: {p_val:.4e}")
+    print(f"T-statistic comparing PROPN and NOUN: {t_stat:.4f}, p-value: {p_val:.4e}")
 
+    t_stat, p_val = stats.ttest_ind(pron, noun, equal_var=False)  # Welch's t-test
+    print(f"T-statistic comparing PRON and NOUN: {t_stat:.4f}, p-value: {p_val:.4e}")
+
+    t_stat, p_val = stats.ttest_ind(propn, pron, equal_var=False)  # Welch's t-test
+    print(f"T-statistic comparing PROPN and PRON: {t_stat:.4f}, p-value: {p_val:.4e}")
 
 def test_entity_length(df):
     print("\n=== Hypothesis 3: Phonological Weight (Correlation) ===")
