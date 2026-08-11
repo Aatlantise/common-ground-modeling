@@ -1,7 +1,6 @@
 import pandas as pd
 import scipy.stats as stats
 import statsmodels.formula.api as smf
-import statsmodels.api as sm
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -72,7 +71,7 @@ def run_mixed_effects_model(df):
 
     # Formula: predict salience using length, POS, and Role.
     # C() indicates categorical variables.
-    formula = "silver_salience ~ entity_length + C(pos_tag) + C(dep_role)"
+    formula = "silver_salience ~ entity_length + C(pos_tag, Treatment(reference='NOUN')) + C(dep_role, Treatment(reference='nsubj'))"
 
     try:
         model = smf.mixedlm(formula, data=df, groups=df["doc_id"])

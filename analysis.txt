@@ -36,34 +36,34 @@ Spearman Correlation: -0.2965, p-value: 0.0000e+00
 === Mixed-Effects Regression ===
 /home/jm3743/.virtualenv/commonground/lib/python3.11/site-packages/statsmodels/regression/mixed_linear_model.py:2237: ConvergenceWarning: The MLE may be on the boundary of the parameter space.
   warnings.warn(msg, ConvergenceWarning)
-             Mixed Linear Model Regression Results
-===============================================================
-Model:              MixedLM Dependent Variable: silver_salience
-No. Observations:   23473   Method:             REML
-No. Groups:         171     Scale:              0.1190
-Min. group size:    1       Log-Likelihood:     -8476.1969
-Max. group size:    266     Converged:          Yes
-Mean group size:    137.3
----------------------------------------------------------------
-                     Coef.  Std.Err.   z    P>|z| [0.025 0.975]
----------------------------------------------------------------
-Intercept             0.162    0.035  4.625 0.000  0.093  0.230
-C(pos_tag)[T.ADV]     0.083    0.058  1.429 0.153 -0.031  0.197
-C(pos_tag)[T.AUX]    -0.103    0.347 -0.297 0.767 -0.783  0.577
-C(pos_tag)[T.DET]    -0.029    0.045 -0.655 0.513 -0.118  0.059
-C(pos_tag)[T.INTJ]    0.081    0.202  0.400 0.689 -0.315  0.477
-C(pos_tag)[T.NOUN]    0.032    0.029  1.109 0.267 -0.025  0.089
-C(pos_tag)[T.NUM]    -0.015    0.033 -0.449 0.653 -0.079  0.050
-C(pos_tag)[T.PRON]    0.402    0.030 13.597 0.000  0.344  0.460
-C(pos_tag)[T.PROPN]   0.167    0.029  5.682 0.000  0.110  0.225
-C(pos_tag)[T.SYM]    -0.065    0.063 -1.035 0.301 -0.188  0.058
-C(pos_tag)[T.VERB]   -0.043    0.037 -1.183 0.237 -0.115  0.029
-C(pos_tag)[T.X]      -0.167    0.246 -0.680 0.497 -0.650  0.315
-C(dep_role)[T.nmod]  -0.089    0.044 -2.040 0.041 -0.175 -0.004
-C(dep_role)[T.nsubj]  0.051    0.044  1.160 0.246 -0.035  0.137
-C(dep_role)[T.obj]   -0.090    0.044 -2.051 0.040 -0.176 -0.004
-C(dep_role)[T.obl]   -0.109    0.044 -2.498 0.012 -0.195 -0.024
-C(dep_role)[T.root]   0.047    0.044  1.065 0.287 -0.040  0.133
-entity_length        -0.002    0.001 -4.109 0.000 -0.003 -0.001
-Group Var             0.002    0.001
-===============================================================
+                            Mixed Linear Model Regression Results
+=============================================================================================
+Model:                        MixedLM           Dependent Variable:           silver_salience
+No. Observations:             23473             Method:                       REML
+No. Groups:                   171               Scale:                        0.1190
+Min. group size:              1                 Log-Likelihood:               -8476.1969
+Max. group size:              266               Converged:                    Yes
+Mean group size:              137.3
+---------------------------------------------------------------------------------------------
+                                                  Coef.  Std.Err.    z    P>|z| [0.025 0.975]
+---------------------------------------------------------------------------------------------
+Intercept                                          0.245    0.007  34.101 0.000  0.231  0.259
+C(pos_tag, Treatment(reference='NOUN'))[T.ADJ]    -0.032    0.029  -1.109 0.267 -0.089  0.025
+C(pos_tag, Treatment(reference='NOUN'))[T.ADV]     0.051    0.051   1.007 0.314 -0.048  0.151
+C(pos_tag, Treatment(reference='NOUN'))[T.AUX]    -0.135    0.346  -0.390 0.696 -0.813  0.543
+C(pos_tag, Treatment(reference='NOUN'))[T.DET]    -0.061    0.035  -1.770 0.077 -0.130  0.007
+C(pos_tag, Treatment(reference='NOUN'))[T.INTJ]    0.049    0.200   0.244 0.807 -0.343  0.441
+C(pos_tag, Treatment(reference='NOUN'))[T.NUM]    -0.047    0.016  -2.869 0.004 -0.079 -0.015
+C(pos_tag, Treatment(reference='NOUN'))[T.PRON]    0.370    0.007  50.076 0.000  0.355  0.384
+C(pos_tag, Treatment(reference='NOUN'))[T.PROPN]   0.135    0.007  18.750 0.000  0.121  0.150
+C(pos_tag, Treatment(reference='NOUN'))[T.SYM]    -0.097    0.056  -1.735 0.083 -0.206  0.013
+C(pos_tag, Treatment(reference='NOUN'))[T.VERB]   -0.075    0.025  -3.044 0.002 -0.124 -0.027
+C(pos_tag, Treatment(reference='NOUN'))[T.X]      -0.199    0.245  -0.815 0.415 -0.679  0.280
+C(dep_role, Treatment(reference='nsubj'))[T.amod] -0.051    0.044  -1.160 0.246 -0.137  0.035
+C(dep_role, Treatment(reference='nsubj'))[T.nmod] -0.140    0.007 -18.844 0.000 -0.155 -0.126
+C(dep_role, Treatment(reference='nsubj'))[T.obj]  -0.141    0.007 -19.789 0.000 -0.155 -0.127
+C(dep_role, Treatment(reference='nsubj'))[T.obl]  -0.160    0.007 -22.517 0.000 -0.174 -0.146
+C(dep_role, Treatment(reference='nsubj'))[T.root] -0.004    0.011  -0.336 0.737 -0.026  0.019
+entity_length                                     -0.002    0.001  -4.109 0.000 -0.003 -0.001
+Group Var                                          0.002    0.001
+=============================================================================================
